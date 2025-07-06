@@ -1,9 +1,6 @@
-var TILE_W = 25;
-var TILE_H = 25;
-
 function Game() {
-  this.WIDTH = 40;
-  this.HEIGHT = 24;
+  this.WIDTH = MAP_WIDTH;
+  this.HEIGHT = MAP_HEIGHT;
   this.map = [];
   this.rooms = [];
   this.items = [];
@@ -55,13 +52,11 @@ Game.prototype.isOccupied = function(x, y) {
 };
 
 Game.prototype.placeItems = function() {
-  // 2 меча
-  for (var i = 0; i < 2; i++) {
+  for (var i = 0; i < SWORD_COUNT; i++) {
     var cell = this.getRandomEmptyCell();
     if (cell) this.items.push({type: 'sword', x: cell.x, y: cell.y});
   }
-  // 10 зелий
-  for (var j = 0; j < 10; j++) {
+  for (var j = 0; j < POTION_COUNT; j++) {
     var cell2 = this.getRandomEmptyCell();
     if (cell2) this.items.push({type: 'potion', x: cell2.x, y: cell2.y});
   }
@@ -70,12 +65,17 @@ Game.prototype.placeItems = function() {
 Game.prototype.placeHero = function() {
   var cell = this.getRandomEmptyCell();
   if (cell) this.hero = new Hero(cell.x, cell.y);
+  if (this.hero) this.hero.hp = HERO_MAX_HP;
 };
 
 Game.prototype.placeEnemies = function() {
-  for (var i = 0; i < 10; i++) {
+  for (var i = 0; i < ENEMY_COUNT; i++) {
     var cell = this.getRandomEmptyCell();
-    if (cell) this.enemies.push(new Enemy(cell.x, cell.y));
+    if (cell) {
+      var enemy = new Enemy(cell.x, cell.y);
+      enemy.hp = ENEMY_MAX_HP;
+      this.enemies.push(enemy);
+    }
   }
 };
 
@@ -98,7 +98,7 @@ Game.prototype.pickItem = function() {
   for (var i = 0; i < this.items.length; i++) {
     var item = this.items[i];
     if (item.x === this.hero.x && item.y === this.hero.y) {
-      if (item.type === 'potion') this.hero.hp = Math.min(100, this.hero.hp + 30);
+      if (item.type === 'potion') this.hero.hp = Math.min(HERO_MAX_HP, this.hero.hp + POTION_HEAL);
       if (item.type === 'sword') this.hero.power++;
       this.items.splice(i, 1);
       break;
@@ -164,7 +164,7 @@ Game.prototype.heroAttack = function() {
       var nx = this.hero.x + dirs[d].dx;
       var ny = this.hero.y + dirs[d].dy;
       if (enemy.x === nx && enemy.y === ny) {
-        enemy.hp -= 10 * this.hero.power;
+        enemy.hp -= HERO_ATTACK * this.hero.power;
         if (enemy.hp <= 0) this.enemies.splice(i, 1);
         break;
       }
@@ -179,19 +179,17 @@ Game.prototype.enemiesTurn = function() {
   ];
   for (var i = 0; i < this.enemies.length; i++) {
     var enemy = this.enemies[i];
-    // Если герой на соседней клетке — атаковать
     var attacked = false;
     for (var d = 0; d < dirs.length; d++) {
       var nx = enemy.x + dirs[d].dx;
       var ny = enemy.y + dirs[d].dy;
       if (this.hero.x === nx && this.hero.y === ny) {
-        this.hero.hp -= 10;
+        this.hero.hp -= ENEMY_ATTACK;
         attacked = true;
         break;
       }
     }
     if (!attacked) {
-      // Случайное движение
       var moves = [];
       for (var d = 0; d < dirs.length; d++) {
         var nx = enemy.x + dirs[d].dx;
@@ -210,7 +208,6 @@ Game.prototype.enemiesTurn = function() {
   this.render();
 };
 
-// Обработка клавиш
 $(document).on('keydown', function(e) {
   if (!window.game || !game.hero) return;
   if (e.key === 'w' || e.key === 'ArrowUp') { game.moveHero(0, -1); game.enemiesTurn(); }
