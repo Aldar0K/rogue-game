@@ -6,6 +6,8 @@ function Game() {
   this.items = [];
   this.enemies = [];
   this.hero = null;
+  this.winShown = false;
+  this.loseShown = false;
 }
 
 Game.prototype.init = function() {
@@ -171,6 +173,7 @@ Game.prototype.heroAttack = function() {
     }
   }
   this.render();
+  setTimeout(this.checkWin.bind(this));
 };
 
 Game.prototype.enemiesTurn = function() {
@@ -206,6 +209,21 @@ Game.prototype.enemiesTurn = function() {
     }
   }
   this.render();
+  setTimeout(this.checkLose.bind(this));
+};
+
+Game.prototype.checkWin = function() {
+  if (this.enemies.length === 0 && !this.winShown && !this.loseShown) {
+    alert('Победа! Все враги уничтожены!');
+    this.winShown = true;
+  }
+};
+
+Game.prototype.checkLose = function() {
+  if (this.hero && this.hero.hp <= 0 && !this.loseShown && !this.winShown) {
+    alert('Поражение! Герой погиб!');
+    this.loseShown = true;
+  }
 };
 
 $(document).on('keydown', function(e) {
